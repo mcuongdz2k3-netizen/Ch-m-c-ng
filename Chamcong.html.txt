@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Chấm công đơn giản</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px auto; max-width: 400px; background: #f9f9f9; }
+    label { display: block; margin-top: 18px; }
+    input { width: 100%; padding: 8px; }
+    button { margin-top: 20px; padding: 10px 16px; }
+    .result { margin-top: 24px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>Chấm công trong ngày</h2>
+  <form id="chamCongForm">
+    <label>Giờ bắt đầu vào làm:
+      <input type="time" id="vaoLam" required>
+    </label>
+    <label>Giờ nghỉ:
+      <input type="time" id="nghi" required>
+    </label>
+    <label>Giờ tăng ca (nếu có):
+      <input type="time" id="tangCa">
+    </label>
+    <button type="submit">Tính tổng giờ làm</button>
+  </form>
+  <div class="result" id="tongGio"></div>
+  <script>
+    function parseTime(str) {
+      if (!str) return null;
+      let [h, m] = str.split(":").map(Number);
+      return h * 60 + m;
+    }
+
+    document.getElementById('chamCongForm').onsubmit = function(e) {
+      e.preventDefault();
+      let vaoLam = parseTime(document.getElementById('vaoLam').value);
+      let nghi = parseTime(document.getElementById('nghi').value);
+      let tangCa = parseTime(document.getElementById('tangCa').value);
+
+      let tongPhut = 0;
+      if (vaoLam !== null && nghi !== null) {
+        tongPhut = nghi - vaoLam;
+      }
+      if (tangCa && nghi) {
+        tongPhut += tangCa - nghi;
+      }
+      let gio = Math.floor(tongPhut / 60);
+      let phut = tongPhut % 60;
+
+      document.getElementById('tongGio').textContent =
+        'Tổng số giờ làm: ' + gio + ' giờ ' + phut + ' phút';
+
+      // Lưu dữ liệu vào localStorage, mỗi ngày 1 bản ghi, lưu trong 7 ngày
+      let today = new Date().toISOString().slice(0,10);
+      let records = JSON.parse(localStorage.getItem('records') || '{}');
+      records[today] = {vaoLam: document.getElementById('vaoLam').value, nghi: document.getElementById('nghi').value, tangCa: document.getElementById('tangCa').value, tong: document.getElementById('tongGio').textContent, time: Date.now()};
+      // chỉ giữ lại tối đa 7 ngày gần nhất
+      let dates = Object.keys(records).sort((a,b)=>records[b].time-records[a].time);
+      dates.slice(7).forEach(date => delete records[date]);
+      localStorage.setItem('records', JSON.stringify(records));
+    };
+  </script>
+</body>
+</html>
